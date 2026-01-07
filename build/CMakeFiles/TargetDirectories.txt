@@ -1,6 +1,0 @@
-/mnt/c/Users/dooli/CLionProjects/SocketTickTackToe/build/CMakeFiles/SocketTickTackToe.dir
-/mnt/c/Users/dooli/CLionProjects/SocketTickTackToe/build/CMakeFiles/ClientTickTackToe.dir
-/mnt/c/Users/dooli/CLionProjects/SocketTickTackToe/build/CMakeFiles/edit_cache.dir
-/mnt/c/Users/dooli/CLionProjects/SocketTickTackToe/build/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/dooli/CLionProjects/SocketTickTackToe/build/_deps/json-build/CMakeFiles/edit_cache.dir
-/mnt/c/Users/dooli/CLionProjects/SocketTickTackToe/build/_deps/json-build/CMakeFiles/rebuild_cache.dir

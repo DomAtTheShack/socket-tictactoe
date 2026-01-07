@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <nlohmann/json.hpp>
+#include <netdb.h> // Required for getaddrinfo
 
 const int PORT = 8080;
 char BUFFER[4096] = {0};
@@ -20,12 +21,44 @@ bool connectToServer(int& sock);
 void drawBoard(int board[]);
 json makeTurn(json board, int myId);
 
-bool connectToServer(int& sock, std::string IP) {
+std::string resolveHostname(const std::string& hostname) {
+    struct addrinfo hints{}, *res;
+    char ip_string[INET_ADDRSTRLEN]; // Buffer for the resulting IP
+
+    // 1. Setup hints
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;      // Force IPv4
+    hints.ai_socktype = SOCK_STREAM;
+
+    // 2. Perform DNS Lookup
+    // "nullptr" for service means we only want the IP, not a specific port mapping
+    int status = getaddrinfo(hostname.c_str(), nullptr, &hints, &res);
+
+    if (status != 0) {
+        std::cerr << "[Client] DNS Error: " << gai_strerror(status) << "\n";
+        return "";
+    }
+
+    // 3. Extract IP address from the results
+    // We assume the first result is good enough
+    struct sockaddr_in* ipv4 = (struct sockaddr_in*)res->ai_addr;
+    void* addr = &(ipv4->sin_addr);
+
+    // 4. Convert binary IP back to string (to be used later)
+    inet_ntop(AF_INET, addr, ip_string, INET_ADDRSTRLEN);
+
+    freeaddrinfo(res); // Clean up memory allocated by getaddrinfo
+
+    std::cout << "[Client] Resolved " << hostname << " to " << ip_string << "\n";
+    return std::string(ip_string);
+}
+
+bool connectToServer(int& sock, std::string HOSTNAME) {
     sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
 
-    if (inet_pton(AF_INET, IP.data(), &serv_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, resolveHostname(HOSTNAME).data(), &serv_addr.sin_addr) <= 0) {
         std::cout << "\nInvalid address/ Address not supported \n";
         return false;
     }
@@ -105,14 +138,14 @@ json makeTurn(json board, int myId) {
 
 int main() {
     int sock = 0;
-    std::string IP = "127.0.0.1"; // Change to Server IP if needed
+    std::string HOSTNAME = "127.0.0.1"; // Change to Server IP if needed
 
     std::cout << "Enter Server IP: ";
-    std::cin >> IP;
+    std::cin >> HOSTNAME;
     std::cout << "\n";
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -1;
-    if (!connectToServer(sock, IP)) return -1;
+    if (!connectToServer(sock, HOSTNAME)) return -1;
 
     json gameJSON;
     gameJSON["playerNum"] = 0;
@@ -126,6 +159,7 @@ int main() {
     json server_json = receiveData(sock);
     if (server_json.empty() || server_json["type"] != "welcome") {
         std::cerr << "Did not receive welcome from server. Exiting.\n";
+        std::cout << server_json.dump() << "\n";
         return -1;
     }
 

@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/SocketTickTackToe.dir/server.cpp.o -o SocketTickTackToe 
